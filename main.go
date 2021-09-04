@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"context"
+	"encoding/csv"
 	"flag"
 	"fmt"
 	"log"
@@ -114,12 +115,12 @@ func writeFileByLine(filePath string, ch <-chan float64) {
 	}
 	defer file.Close()
 
-	writer := bufio.NewWriter(file)
+	writer := csv.NewWriter(file)
 
 	num := 0
 	total := 0
 	for result := range ch {
-		writer.WriteString(cast.ToString(result) + "\n")
+		writer.Write([]string{"1", cast.ToString(result)})
 		num++
 		if num >= 1000 {
 			writer.Flush()
