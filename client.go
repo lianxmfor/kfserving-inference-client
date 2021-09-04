@@ -33,7 +33,7 @@ func NewKFServingGrpcClient(callOptions ...grpc.DialOption) *KFServingGrpcClient
 func (k *KFServingGrpcClient) getConnection(host string) (*grpc.ClientConn, error) {
 	k.mutex.Lock()
 	if _, ok := k.conns[host]; !ok {
-		log.Printf("diral host %s", host)
+		log.Printf("dial host %s", host)
 		if conn, err := grpc.Dial(host, k.dialCallOptions...); err != nil {
 			return nil, err
 		} else {
