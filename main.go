@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -116,12 +117,17 @@ func writeFileByLine(filePath string, ch <-chan float64) {
 	writer := bufio.NewWriter(file)
 
 	num := 0
+	total := 0
 	for result := range ch {
 		writer.WriteString(cast.ToString(result) + "\n")
 		num++
 		if num >= 1000 {
 			writer.Flush()
 			num = 0
+		}
+		total++
+		if total%10 == 0 {
+			fmt.Println(total, " done")
 		}
 	}
 	writer.Flush()
