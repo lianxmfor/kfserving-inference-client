@@ -11,6 +11,25 @@ The lightgbm example model [simple](https://github.com/microsoft/LightGBM/blob/m
 2. [Install Argo Workflows](https://docs.seldon.io/projects/seldon-core/en/latest/examples/seldon_core_setup.html)
 3. [Install MinIO](https://docs.seldon.io/projects/seldon-core/en/latest/examples/minio_setup.html)
 
+## Register lightGBM Inference Server
+
+seldon core does not currently have an inference server that supports the lightGBM model,so I registered the lightgbm-enabled inference server I build with seldon. can register our Inference server with seldon core by referring to [document](https://docs.seldon.io/projects/seldon-core/en/latest/servers/custom.html#adding-a-new-inference-server)
+
+``` json
+ {
+   ...
+  "LightGBM_SERVER": {
+      "protocols": {
+        "kfserving":{
+          "defaultImageVersion": "v0.0.3",
+	        "image": "1034552569/seldon-lightgbm"
+	     }
+      }
+  }
+}
+```
+
+
 ## Upload the file to our minio
 
 ``` shell

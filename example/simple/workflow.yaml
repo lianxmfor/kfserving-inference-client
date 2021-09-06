@@ -84,7 +84,7 @@ spec:
                         memory: 1000Mi
               graph:
                 children: []
-                implementation: PALFISH_LightGBM_SERVER
+                implementation: LightGBM_SERVER
                 modelUri: s3://lianxm-seldon-model-1256448737/lightgbm/simple
                 envSecretRefName: seldon-init-secret
                 name: classifier
