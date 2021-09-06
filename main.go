@@ -1,11 +1,11 @@
 package main
 
 import (
-	"bufio"
 	"context"
 	"encoding/csv"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"strings"
@@ -37,16 +37,16 @@ func init() {
 func main() {
 	flag.Parse()
 
-	lineToInference := make(chan string, worker)
-	inferenceRequestToFile := make(chan float64, worker)
+	requestRecords := make(chan RequestRecord, worker)
+	responseRecords := make(chan ResponseRecord, worker)
 
-	go readFileByLine(inputDataPath, lineToInference)
+	go readFileByLine(inputDataPath, requestRecords)
 
 	for i := 0; i < worker; i++ {
-		go doInference(lineToInference, inferenceRequestToFile)
+		go doInference(requestRecords, responseRecords)
 	}
 
-	writeFileByLine(outputDataPath, inferenceRequestToFile)
+	writeFileByLine(outputDataPath, responseRecords)
 }
 
 func parseRawLine(s string) []float64 {
@@ -62,17 +62,16 @@ func parseRawLine(s string) []float64 {
 	return fp64Contents
 }
 
-func doInference(in <-chan string, out chan<- float64) {
-	for s := range in {
-		fp64Contents := parseRawLine(s)
+func doInference(records <-chan RequestRecord, out chan<- ResponseRecord) {
+	for r := range records {
 		res, err := kfServingGrpcClient.Inference(context.Background(), host, &inference.ModelInferRequest{
 			ModelName: modelName,
 			Inputs: []*inference.ModelInferRequest_InferInputTensor{
 				{
-					Shape:    []int64{1, int64(len(fp64Contents))},
+					Shape:    []int64{1, int64(len(r.Tensor))},
 					Datatype: "FP64",
 					Contents: &inference.InferTensorContents{
-						Fp64Contents: fp64Contents,
+						Fp64Contents: r.Tensor,
 					},
 				},
 			},
@@ -82,33 +81,60 @@ func doInference(in <-chan string, out chan<- float64) {
 			log.Fatal(err)
 		}
 
-		inferenceRes := cast.ToFloat64(res.Outputs[0].Contents.Fp32Contents[0])
-		out <- inferenceRes
+		out <- ResponseRecord{
+			EntityKey:         r.EntityKey,
+			InferenceResponse: cast.ToFloat64(res.Outputs[0].Contents.Fp32Contents[0]),
+		}
 	}
 
 	close(out)
 }
 
-func readFileByLine(filePath string, line chan<- string) {
+type RequestRecord struct {
+	EntityKey string
+	Tensor    []float64
+}
+
+type ResponseRecord struct {
+	EntityKey         string
+	InferenceResponse float64
+}
+
+func readFileByLine(filePath string, records chan<- RequestRecord) {
+	defer close(records)
+
 	file, err := os.Open(filePath)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer file.Close()
 
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line <- scanner.Text()
-	}
+	csvr := csv.NewReader(file)
 
-	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
-	}
+	for {
+		row, err := csvr.Read()
+		if err != nil {
+			if err == io.EOF {
+				err = nil
+			}
+			return
+		}
 
-	close(line)
+		entityKey := row[0]
+		tensor := make([]float64, 0, len(row)-1)
+		for _, t := range row[1:] {
+			tensor = append(tensor, cast.ToFloat64(t))
+		}
+
+		records <- RequestRecord{
+			EntityKey: entityKey,
+			Tensor:    tensor,
+		}
+
+	}
 }
 
-func writeFileByLine(filePath string, ch <-chan float64) {
+func writeFileByLine(filePath string, records <-chan ResponseRecord) {
 	file, err := os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Fatal(err)
@@ -119,8 +145,8 @@ func writeFileByLine(filePath string, ch <-chan float64) {
 
 	num := 0
 	total := 0
-	for result := range ch {
-		writer.Write([]string{"1", cast.ToString(result)})
+	for r := range records {
+		writer.Write([]string{r.EntityKey, cast.ToString(r.InferenceResponse)})
 		num++
 		if num >= 1000 {
 			writer.Flush()
@@ -128,8 +154,9 @@ func writeFileByLine(filePath string, ch <-chan float64) {
 		}
 		total++
 		if total%10 == 0 {
-			fmt.Println(total, " done")
+			fmt.Printf("%d record have been processed", total)
 		}
 	}
+
 	writer.Flush()
 }

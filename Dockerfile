@@ -1,5 +1,4 @@
-FROM nginx
-#FROM gcr.io/distroless/base-debian10
+FROM bash
 WORKDIR /app
 COPY kfserving-inference-client ./
 CMD ["./kfserving-inference-client", "-h"]

@@ -125,7 +125,7 @@ spec:
         sidecar.istio.io/inject: "false"
     script:
       # image: seldonio/seldon-core-s2i-python37:1.5.0
-      image: 1034552569/kfserving-inference-batch-client:v1
+      image: 1034552569/kfserving-inference-batch-client:v3
       volumeMounts:
       - name: "seldon-pvc"
         mountPath: /assets
