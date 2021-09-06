@@ -49,19 +49,6 @@ func main() {
 	writeFileByLine(outputDataPath, responseRecords)
 }
 
-func parseRawLine(s string) []float64 {
-	s = strings.TrimFunc(s, func(r rune) bool {
-		return r == '{' || r == '}'
-	})
-	ss := strings.Split(strings.TrimSpace(s), ",")
-
-	fp64Contents := make([]float64, len(ss))
-	for i, v := range ss {
-		fp64Contents[i] = cast.ToFloat64(v)
-	}
-	return fp64Contents
-}
-
 func doInference(records <-chan RequestRecord, out chan<- ResponseRecord) {
 	for r := range records {
 		res, err := kfServingGrpcClient.Inference(context.Background(), host, &inference.ModelInferRequest{
