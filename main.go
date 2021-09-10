@@ -22,6 +22,7 @@ var (
 	host           string
 	modelName      string
 	worker         int
+	batchSize      int64
 )
 
 func init() {
@@ -32,6 +33,7 @@ func init() {
 	flag.StringVar(&host, "host", "", "The hostname for the seldon model to send the request to, which can be the ingress of the Seldon model or the service itself ")
 	flag.StringVar(&modelName, "m", "", "model name")
 	flag.IntVar(&worker, "w", 100, "The number of parallel request processor workers to run for parallel processing")
+	flag.Int64Var(&batchSize, "u", 100, "Batch size greater than 1 can be used to group multiple predictions into a single request.")
 }
 
 func main() {
@@ -56,7 +58,6 @@ func startRequest(ctx context.Context, worker int, in <-chan request, out chan<-
 		go requestWorker(ctx, &wait, in, out)
 	}
 	wait.Wait()
-	log.Println("startRequest done!")
 	close(out)
 }
 
@@ -105,8 +106,7 @@ func requestWorker(ctx context.Context, wait *sync.WaitGroup, in <-chan request,
 				Tensor:    r.Tensor,
 			})
 
-			// TODO 使用 flag 消除 500
-			if chunk.RecordCount == 500 {
+			if chunk.RecordCount == batchSize {
 				doRequest(chunk, conn)
 				chunk = NewRequestChunk()
 			}
