@@ -39,16 +39,14 @@ func (k *KFServingGrpcClient) getConnection(host string) (*grpc.ClientConn, erro
 		} else {
 			k.conns[host] = conn
 		}
+		log.Printf("dial host %s success!", host)
 	}
 	k.mutex.Unlock()
 	return k.conns[host], nil
 }
 
-func (k *KFServingGrpcClient) Inference(ctx context.Context, host string, r *inference.ModelInferRequest) (*inference.ModelInferResponse, error) {
-	conn, err := k.getConnection(host)
-	if err != nil {
-		return nil, err
-	}
+func (k *KFServingGrpcClient) Inference(ctx context.Context, host string, r *inference.ModelInferRequest, conn *grpc.ClientConn) (*inference.ModelInferResponse, error) {
+
 	grpcClient := inference.NewGRPCInferenceServiceClient(conn)
 
 	return grpcClient.ModelInfer(ctx, r)
