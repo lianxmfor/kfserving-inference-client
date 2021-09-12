@@ -13,10 +13,10 @@ import (
 	"github.com/spf13/cast"
 )
 
-var mapping map[string]map[string]string
+var mapping map[string]map[string]float64
 
 func Init(dir string) {
-	mapping = make(map[string]map[string]string)
+	mapping = make(map[string]map[string]float64)
 
 	infos, err := ioutil.ReadDir(dir)
 	if err != nil {
@@ -30,7 +30,7 @@ func Init(dir string) {
 
 		feature := path.Base(strings.TrimRight(info.Name(), filepath.Ext(info.Name())))
 		if _, ok := mapping[feature]; !ok {
-			mapping[feature] = make(map[string]string)
+			mapping[feature] = make(map[string]float64)
 		}
 
 		longFilename := filepath.Join(dir, info.Name())
@@ -54,7 +54,7 @@ func Init(dir string) {
 				panic(fmt.Sprintf("not equal 2, values is %v", row))
 			}
 			k, v := row[0], row[1]
-			mapping[feature][k] = v
+			mapping[feature][k] = cast.ToFloat64(v)
 		}
 	}
 }
@@ -65,4 +65,20 @@ func GetFeatureMapping(featurename string, value string) float64 {
 	}
 
 	return cast.ToFloat64(mapping[featurename][value])
+}
+
+func GetMapping() map[string]map[string]float64 {
+	return deepCopy(mapping)
+}
+
+func deepCopy(src map[string]map[string]float64) map[string]map[string]float64 {
+	dst := make(map[string]map[string]float64)
+
+	for k, m := range src {
+		dst[k] = make(map[string]float64)
+		for kk, vv := range m {
+			dst[k][kk] = vv
+		}
+	}
+	return dst
 }
