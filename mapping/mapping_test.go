@@ -14,4 +14,5 @@ func TestMapping(t *testing.T) {
 	assert.NotEqual(t, 0, len(mapping))
 
 	assert.Equal(t, float64(1), mapping["city"]["beijing"])
+	assert.Equal(t, float64(0), mapping["city"][""])
 }

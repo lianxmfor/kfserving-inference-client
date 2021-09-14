@@ -61,7 +61,7 @@ func Init(dir string) {
 
 func GetFeatureMapping(featurename string, value string) float64 {
 	if _, ok := mapping[featurename]; !ok {
-		return 0
+		return cast.ToFloat64(value)
 	}
 
 	return cast.ToFloat64(mapping[featurename][value])

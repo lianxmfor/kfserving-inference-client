@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"kfserving-inference-client/inference"
+	"kfserving-inference-client/mapping"
 
 	"github.com/spf13/cast"
 	"google.golang.org/grpc"
@@ -26,7 +27,7 @@ var (
 )
 
 func init() {
-	InitKFServingGrpcClient(time.Second * 5)
+	InitKFServingGrpcClient(time.Second * 10)
 
 	flag.StringVar(&inputDataPath, "i", "", "The local filestore path where the input file with the data to process is located")
 	flag.StringVar(&outputDataPath, "o", "", "The local filestore path where the output file should be written with the outputs of the batch processing")
@@ -157,7 +158,6 @@ func NewRequestChunk() *RequestChunk {
 }
 
 func getRequestFromFile(cancel context.CancelFunc, filePath string, records chan<- request) {
-
 	defer cancel()
 
 	file, err := os.Open(filePath)
@@ -168,6 +168,10 @@ func getRequestFromFile(cancel context.CancelFunc, filePath string, records chan
 
 	csvr := csv.NewReader(file)
 
+	head, err := csvr.Read()
+	if err != nil {
+		panic(err)
+	}
 	for {
 		row, err := csvr.Read()
 		if err != nil {
@@ -177,10 +181,16 @@ func getRequestFromFile(cancel context.CancelFunc, filePath string, records chan
 			return
 		}
 
-		entityKey := row[0]
-		tensor := make([]float64, 0, len(row)-1)
-		for _, t := range row[1:] {
-			tensor = append(tensor, cast.ToFloat64(t))
+		var (
+			entityKey string
+			tensor    = make([]float64, 0, len(row)-1)
+		)
+		for i, value := range row {
+			if i == 0 {
+				entityKey = value
+				continue
+			}
+			tensor = append(tensor, mapping.GetFeatureMapping(head[i], value))
 		}
 
 		records <- request{
