@@ -82,7 +82,7 @@ func requestWorker(ctx context.Context, wait *sync.WaitGroup, in <-chan request,
 			panic(err)
 		}
 
-		for i, content := range res.Outputs[0].Contents.Fp32Contents {
+		for i, content := range res.Outputs[0].Contents.Fp64Contents {
 			out <- response{
 				EntityKey:         r.EntityKey[i],
 				InferenceResponse: cast.ToFloat64(content),
@@ -219,5 +219,6 @@ func writeResponseToFile(filePath string, records <-chan response) {
 		}
 	}
 
+	log.Println("writeResponseToFile exited.")
 	writer.Flush()
 }
