@@ -22,6 +22,7 @@ var (
 	outputDataPath string
 	host           string
 	modelName      string
+	mappingPath    string
 	worker         int
 	batchSize      int64
 )
@@ -33,12 +34,15 @@ func init() {
 	flag.StringVar(&outputDataPath, "o", "", "The local filestore path where the output file should be written with the outputs of the batch processing")
 	flag.StringVar(&host, "host", "", "The hostname for the seldon model to send the request to, which can be the ingress of the Seldon model or the service itself ")
 	flag.StringVar(&modelName, "m", "", "model name")
+	flag.StringVar(&mappingPath, "mapping_path", ".", "The feature mapping csv file path")
 	flag.IntVar(&worker, "w", 100, "The number of parallel request processor workers to run for parallel processing")
 	flag.Int64Var(&batchSize, "u", 100, "Batch size greater than 1 can be used to group multiple predictions into a single request.")
 }
 
 func main() {
 	flag.Parse()
+
+	mapping.Init(mappingPath)
 
 	in := make(chan request, worker)
 	out := make(chan response, worker)
@@ -112,6 +116,13 @@ func requestWorker(ctx context.Context, wait *sync.WaitGroup, in <-chan request,
 				chunk = NewRequestChunk()
 			}
 		case <-ctx.Done():
+			for r := range in {
+				chunk.AddRecord(request{
+					EntityKey: r.EntityKey,
+					Tensor:    r.Tensor,
+				})
+			}
+
 			if chunk.RecordCount > 0 {
 				doRequest(chunk, conn)
 			}
@@ -219,6 +230,5 @@ func writeResponseToFile(filePath string, records <-chan response) {
 		}
 	}
 
-	log.Println("writeResponseToFile exited.")
 	writer.Flush()
 }
