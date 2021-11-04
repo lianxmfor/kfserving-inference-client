@@ -3,8 +3,8 @@ APP_TAG  := v12
 IMAGE    := $(APP_NAME):$(APP_TAG)
 
 build:
-	GOOS=linux GOARCH=amd64 go build -o kfserving-inference-client
-	docker build -t $(IMAGE) .
+	@go build -o kfserving-inference-client
 
-build-nc:
-	docker build --no-cache -t $(APP_NAME) .
+docker:
+	@go build -o kfserving-inference-client
+	@docker build -t $(IMAGE) .
