@@ -4,12 +4,11 @@ on:
   push:
     tags:
       - "v*.*.*"
-
 jobs:
   build:
     runs-on: ubuntu-latest
-  steps:
-    - name: Checkout
-      users: actions/checkout@v2
-    - name: Release
-      users: softprops/action-gh-release@v1
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Release
+        uses: softprops/action-gh-release@v1
