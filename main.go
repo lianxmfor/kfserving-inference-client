@@ -94,7 +94,7 @@ func requestWorker(ctx context.Context, wait *sync.WaitGroup, in <-chan request,
 		}
 	}
 
-	conn, err := grpc.Dial(host, grpc.WithInsecure(), grpc.WithTimeout(time.Second*5))
+	conn, err := grpc.Dial(host, grpc.WithInsecure(), grpc.WithTimeout(time.Second*5), grpc.WithBlock())
 	if err != nil {
 		panic(err)
 	}
@@ -185,11 +185,11 @@ func getRequestFromFile(cancel context.CancelFunc, filePath string, records chan
 	}
 	for {
 		row, err := csvr.Read()
-		if err != nil {
-			if err == io.EOF {
-				err = nil
-			}
+		if err == io.EOF {
+			err = nil
 			return
+		} else if err != nil {
+			panic(err)
 		}
 
 		var (
@@ -231,4 +231,5 @@ func writeResponseToFile(filePath string, records <-chan response) {
 	}
 
 	writer.Flush()
+
 }
