@@ -1,0 +1,15 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+  steps:
+    - name: Checkout
+      users: actions/checkout@v2
+    - name: Release
+      users: softprops/action-gh-release@v1
