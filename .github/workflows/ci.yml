@@ -14,11 +14,10 @@ jobs:
     - uses: actions/setup-go@v2
       with:
         go-version: '1.17'
-
-    - name: "Build & test"
-        run: |
-          # GOOS=linux GOARCH=amd64 make build
-          make build
+    - name: "Build"
+      run: |
+        # GOOS=linux GOARCH=amd64 make build
+        make build
 
     - uses: "marvinpinto/action-automatic-releases@latest"
       with:
