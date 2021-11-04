@@ -13,7 +13,7 @@ jobs:
       # ...
       - name: "Build & test"
         run: |
-          echo "done!"
+          GOOS=linux GOARCH=amd64 make build
 
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
@@ -22,4 +22,4 @@ jobs:
           prerelease: true
           title: "Development Build"
           files: |
-            LICENSE.txt
+            kfserving-inference-client
