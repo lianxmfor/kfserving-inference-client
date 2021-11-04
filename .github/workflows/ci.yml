@@ -13,7 +13,8 @@ jobs:
       # ...
       - name: "Build & test"
         run: |
-          GOOS=linux GOARCH=amd64 make build
+          # GOOS=linux GOARCH=amd64 make build
+          make build
 
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
